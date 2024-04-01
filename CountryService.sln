@@ -28,6 +28,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Assets", "Assets", "{39F3C6
 		CountryWiki.Web\countries.json = CountryWiki.Web\countries.json
 	EndProjectSection
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CountryService.Client", "CountryService.Client\CountryService.Client.csproj", "{8972D8CC-6A49-4250-8288-6BB370ED6EEF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -66,6 +68,10 @@ Global
 		{61468977-0E56-4707-8C07-D36AA6D1C034}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{61468977-0E56-4707-8C07-D36AA6D1C034}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{61468977-0E56-4707-8C07-D36AA6D1C034}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8972D8CC-6A49-4250-8288-6BB370ED6EEF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8972D8CC-6A49-4250-8288-6BB370ED6EEF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8972D8CC-6A49-4250-8288-6BB370ED6EEF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8972D8CC-6A49-4250-8288-6BB370ED6EEF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -80,6 +86,7 @@ Global
 		{42854850-B3A2-4FAF-BA73-1E4CABBF57D6} = {A75275EE-552C-44D6-8D9E-A8397C7F8DD5}
 		{61468977-0E56-4707-8C07-D36AA6D1C034} = {A75275EE-552C-44D6-8D9E-A8397C7F8DD5}
 		{39F3C6E3-D1F3-4A00-B781-EF100174EDAE} = {A75275EE-552C-44D6-8D9E-A8397C7F8DD5}
+		{8972D8CC-6A49-4250-8288-6BB370ED6EEF} = {A75275EE-552C-44D6-8D9E-A8397C7F8DD5}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {CBD9F481-EDA8-4CEC-9F13-707ACB3B2A84}

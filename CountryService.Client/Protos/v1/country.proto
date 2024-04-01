@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package CountryService.v1;
+
+option csharp_namespace = "CountryService.Client.v1";
+
+import "google/protobuf/empty.proto";
+import "Protos/v1/country.shared.proto";
+
+service CountryService {
+	rpc GetAll(google.protobuf.Empty) returns (stream CountryReply) {}
+	rpc Get(CountryIdRequest) returns (CountryReply) {}
+	rpc Update(CountryUpdateRequest) returns (google.protobuf.Empty) {}
+	rpc Delete(CountryIdRequest) returns (google.protobuf.Empty) {}
+	rpc Create(stream CountryCreationRequest) returns (stream CountryCreationReply) {}
+}
