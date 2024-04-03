@@ -1,9 +1,11 @@
-﻿using CountryService.Client;
+﻿using Calzolari.Grpc.Net.Client.Validation;
+using CountryService.Client;
 using CountryService.Client.v1;
-using Google.Protobuf.WellKnownTypes;
+using CountryService.gRPC.Compression;
 using Grpc.Core;
 using Grpc.Core.Interceptors;
 using Grpc.Net.Client;
+using Grpc.Net.Compression;
 using Microsoft.Extensions.Logging;
 using static CountryService.Client.v1.CountryService;
 
@@ -15,11 +17,27 @@ var loggerFactory = LoggerFactory.Create(logging =>
 
 var logger = loggerFactory.CreateLogger<TracerInterceptor>();
 
+var handler = new SocketsHttpHandler
+{
+    KeepAlivePingDelay = TimeSpan.FromSeconds(15),
+    PooledConnectionIdleTimeout = TimeSpan.FromMinutes(5),
+    // Timeout.InfiniteTimeSpan for infinite idle connection
+    KeepAlivePingTimeout = TimeSpan.FromSeconds(5),
+    EnableMultipleHttp2Connections = true
+};
+
 var channel = GrpcChannel.ForAddress("https://localhost:5003", new
     GrpcChannelOptions
     {
-        LoggerFactory = loggerFactory
-    });
+        LoggerFactory = loggerFactory,
+        CompressionProviders = new List<ICompressionProvider>
+        {
+            new BrotliCompressionProvider()
+        },
+        MaxReceiveMessageSize = 6291456, // 6 MB,
+        MaxSendMessageSize = 6291456, // 6 MB
+        HttpHandler = handler
+});
 var countryClient = new CountryServiceClient(channel.Intercept(new TracerInterceptor(logger)));
 
 //using var serverStreamingCall = countryClient.GetAll(new Empty());
@@ -116,29 +134,67 @@ var countryClient = new CountryServiceClient(channel.Intercept(new TracerInterce
 //    Id = 1
 //}); // Works as well but Headers and Trailers cannot be accessed
 
-var countryIdRequest = new CountryIdRequest { Id = 1 };
+//var countryIdRequest = new CountryIdRequest { Id = 1 };
+//try
+//{
+//    var countryCall = countryClient.GetAsync(countryIdRequest, deadline: DateTime.UtcNow.AddSeconds(30));
+//    var country = await countryCall.ResponseAsync;
+//    Console.WriteLine($"{country.Id}: {country.Name}");
+//    // Read headers and Trailers
+//    var countryCallHeaders = await countryCall.ResponseHeadersAsync;
+//    var countryCallTrailers = countryCall.GetTrailers();
+//    var myHeaderValue = countryCallHeaders.GetValue("myHeaderName");
+//    var myTrailerValue = countryCallTrailers.GetValue("myTrailerName");
+//}
+//catch (RpcException ex) when (ex.StatusCode == StatusCode.DeadlineExceeded)
+//{
+//    Console.WriteLine($"Get country with Id: {countryIdRequest.Id} has timed out ");
+//    var trailers = ex.Trailers;
+//    var correlationId = trailers.GetValue("correlationId");
+//}
+//catch (RpcException ex)
+//{
+//    Console.WriteLine($"An error occured while getting the country with Id: {countryIdRequest.Id}");
+//    var trailers = ex.Trailers;
+//    var correlationId = trailers.GetValue("correlationId");
+//}
+
+using var bidirectionnalStreamingCall = countryClient.Create();
+
 try
 {
-    var countryCall = countryClient.GetAsync(countryIdRequest, deadline: DateTime.UtcNow.AddSeconds(30));
-    var country = await countryCall.ResponseAsync;
-    Console.WriteLine($"{country.Id}: {country.Name}");
-    // Read headers and Trailers
-    var countryCallHeaders = await countryCall.ResponseHeadersAsync;
-    var countryCallTrailers = countryCall.GetTrailers();
-    var myHeaderValue = countryCallHeaders.GetValue("myHeaderName");
-    var myTrailerValue = countryCallTrailers.GetValue("myTrailerName");
+    var countriesToCreate = new List<CountryCreationRequest>
+    {
+        new CountryCreationRequest
+        {
+            Name = "Japan",
+            Description = "",
+            //CreateDate = Timestamp.FromDateTime(DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc))
+        }
+    };
+    // Write
+    foreach (var countryToCreate in countriesToCreate)
+    {
+        await bidirectionnalStreamingCall.RequestStream.WriteAsync
+        (countryToCreate);
+        Console.WriteLine($"Country {countryToCreate.Name} set for creation");
+    }
+    // Tells server that request streaming is done
+    await bidirectionnalStreamingCall.RequestStream.CompleteAsync();
+    // Read
+    await foreach (var createdCountry in bidirectionnalStreamingCall.ResponseStream.ReadAllAsync())
+    {
+        Console.WriteLine($"{createdCountry.Name} has been created with Id: {createdCountry.Id}");
+    }
 }
-catch (RpcException ex) when (ex.StatusCode == StatusCode.DeadlineExceeded)
+catch (RpcException ex) when (ex.StatusCode == StatusCode.InvalidArgument)
 {
-    Console.WriteLine($"Get country with Id: {countryIdRequest.Id} has timed out ");
-    var trailers = ex.Trailers;
-    var correlationId = trailers.GetValue("correlationId");
+    var errors = ex.GetValidationErrors();
+    Console.WriteLine(ex.Message);
 }
 catch (RpcException ex)
 {
-    Console.WriteLine($"An error occured while getting the country with Id: {countryIdRequest.Id}");
-    var trailers = ex.Trailers;
-    var correlationId = trailers.GetValue("correlationId");
+    Console.WriteLine(ex.Message);
 }
 
 // Perform calls

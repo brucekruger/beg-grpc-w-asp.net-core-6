@@ -1,8 +1,12 @@
+using Calzolari.Grpc.AspNetCore.Validation;
+using CountryService.gRPC.Validator;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddGrpc(options => {
     options.EnableDetailedErrors = true;
+    options.IgnoreUnknownServices = true;
     options.MaxReceiveMessageSize = 6291456; // 6 MB
     options.MaxSendMessageSize = 6291456; // 6 MB
     options.CompressionProviders = new List<ICompressionProvider>
@@ -12,7 +16,10 @@ builder.Services.AddGrpc(options => {
     options.ResponseCompressionAlgorithm = "br"; // grpc-accept-encoding
     options.ResponseCompressionLevel = CompressionLevel.Optimal; // compression level used if not set on the provider
     options.Interceptors.Add<ExceptionInterceptor>(); // Register custom ExceptionInterceptor interceptor
+    options.EnableMessageValidation();
 });
+builder.Services.AddGrpcValidation();
+builder.Services.AddValidator<CountryCreateRequestValidator>();
 builder.Services.AddGrpcReflection();
 builder.Services.AddScoped<ICountryRepository, CountryRepository>();
 builder.Services.AddScoped<ICountryServices, CountryServices>();

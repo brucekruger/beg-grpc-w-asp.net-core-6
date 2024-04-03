@@ -11,6 +11,8 @@ public class CountryGrpcService : CountryServiceBase
 
     public override async Task GetAll(Empty request, IServerStreamWriter<CountryReply> responseStream, ServerCallContext context)
     {
+        var headers = context.GetHttpContext().Request.Headers;
+
         var lst = await _countryService.GetAllAsync();
 
         foreach (var country in lst)
